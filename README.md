@@ -6,10 +6,9 @@ Works best on sequences from North America and Europe
 
 This project is still being tweaked for performance improvements. This is an initial release.
 
+## Requisites
 
-This project requires conda. Get it here:
-
-https://anaconda.org/conda-forge/conda
+This project requires conda. Get it here: https://anaconda.org/conda-forge/conda
 
 To download the prerequisites run: `conda env create -f conda.yaml`
 
