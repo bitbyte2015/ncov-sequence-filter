@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 import numpy as np
+import sys
 
 SEQUENCE_LENGTH = 29903
 
@@ -14,16 +15,16 @@ def countSamples(filename):
 
 def sequenceToArray(fastaEntry, recombinant):
   inputString = []
-  nucleotideValues =    {
-  "-": 0.0833333333333,
-  "N": 0.25,
-  "A": 0.416666666667,
-  "T": 0.583333333333,
-  "C": 0.75,
-  "G": 0.916666666667
+  nucleotideValues = {
+      "-": [0.0, 0.0, 0.0, 0.0],
+      "N": [0.0, 0.0, 0.0, 0.0],
+      "A": [1.0, -1.0, -1.0, -1.0],
+      "T": [-1.0, 1.0, -1.0, -1.0],
+      "C": [-1.0, -1.0, 1.0, -1.0],
+      "G": [-1.0, -1.0, -1.0, 1.0]
   }
   for char in fastaEntry:
-    inputString.append(nucleotideValues.get(char, 0.25))
+    inputString.append(nucleotideValues.get(char, [0.0, 0.0, 0.0, 0.0]))
   if(recombinant):
     onesPlaceholder = np.ones((1, 1))
   else:
@@ -39,7 +40,7 @@ def parseAlignedFasta(filename, recombinant, returnNamedList):
     if(evenLine):
       line = line.rstrip('\n')
       sequenceData = sequenceToArray(line, recombinant)
-      x_data[arrayPosition, 0] = sequenceData[0]
+      x_data[arrayPosition] = sequenceData[0]
       y_data[arrayPosition, 0] = sequenceData[1]
       evenLine = False
       arrayPosition+=1
@@ -51,38 +52,50 @@ def parseAlignedFasta(filename, recombinant, returnNamedList):
   file.close()
   return sequenceNames
 
-input_shape = (1, 1, SEQUENCE_LENGTH)
-
 model = keras.Sequential()
-model.add(layers.Dropout(0.0)) #dropout model used to prevent overfitting during training
-model.add(layers.Conv1D(256, 1, activation='relu', input_shape=input_shape[1:]))
-model.add(layers.MaxPooling1D(1, 1))
-model.add(layers.Conv1D(128, 1, activation='relu'))
-model.add(layers.MaxPooling1D(1, 1))
-model.add(layers.Conv1D(64, 1, activation='relu'))
-model.add(layers.MaxPooling1D(1, 1))
-model.add(layers.Dense(32, activation='relu'))
-model.add(layers.Dense(8, activation='relu'))
-model.add(layers.Dense(1, activation='sigmoid'))
+model.add(layers.Input(shape=(SEQUENCE_LENGTH, 4)))
+model.add(layers.Dropout(0.0))
+model.add(layers.Flatten())
+model.add(layers.Dense(256, activation='relu'))
+model.add(layers.Dropout(0.05))
+model.add(layers.Dense(64, activation='relu'))
+model.add(layers.Dropout(0.05))
+model.add(layers.Dense(256, activation='relu'))
+model.add(layers.Dense(119612))
+model.add(layers.Reshape((29903, 4)))
 
 model.load_weights('trained_weights/weights')
 
 SEQUENCE_COUNT = countSamples("data/aligned.fasta")
-x_data = np.empty([SEQUENCE_COUNT, 1, SEQUENCE_LENGTH], dtype=float) # define our placeholder arrays
+x_data = np.empty([SEQUENCE_COUNT, SEQUENCE_LENGTH, 4], dtype=float)
 y_data = np.empty([SEQUENCE_COUNT, 1], dtype=float)
+
+arrayPosition = 0
 
 sequenceNames = parseAlignedFasta("data/aligned.fasta", False, True)
 
 predictions = model.predict(x_data)
 normalizedPredictions = []
 
-for item in predictions:
-  if(item >= 0.5):
-    item = 1
+for item in zip(x_data,predictions):
+  y_true = tf.cast(item[0], tf.float32)
+  y_pred = tf.cast(item[1], tf.float32)
+  elements_equal_to_value = tf.equal(y_true, 0.0)
+  inverted = tf.equal(elements_equal_to_value, False)
+  as_ints = tf.cast(inverted, tf.int32)
+  as_float = tf.cast(inverted, tf.float32)
+  NTcount = tf.reduce_sum(as_ints)
+  y_true = tf.math.multiply(y_true, as_float)
+  y_pred = tf.math.multiply(y_pred, as_float)
+  MSE = y_true-y_pred
+  MSE = MSE*MSE
+  MSE = tf.reduce_sum(MSE)/tf.cast(NTcount, tf.float32)
+  if(MSE >= float(sys.argv[1])):
+    MSE = 1
   else:
-    item = 0
-  normalizedPredictions.append(item)
+    MSE = 0
+  normalizedPredictions.append(MSE)
 
 for i in range(len(normalizedPredictions)):
   if(normalizedPredictions[i]==1):
-    print(sequenceNames[i].replace(">", ""), end=', ')
+    print(sequenceNames[i].replace(">", ""), end=',')

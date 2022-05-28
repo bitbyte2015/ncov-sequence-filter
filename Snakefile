@@ -1,6 +1,6 @@
 rule build:
     input:
-        "recombinants.csv"
+        "data/pruned.fasta"
 
 def input_for_do_stuff(wildcards):
     try:
@@ -20,10 +20,18 @@ rule unpack_gisaid_tar:
         mv data/unpacked/*.fasta {output.sequences}
         """
 
+rule eliminate_spaces:
+    input: rules.unpack_gisaid_tar.output.sequences
+    output: "data/tweaked.fasta"
+    shell:
+        """
+        python clearspaces.py
+        """
+
 rule nextalign:
     input:
         nextalign_dir = "nextalign",
-        fasta = rules.unpack_gisaid_tar.output.sequences
+        fasta = rules.eliminate_spaces.output
     output:
         "data/aligned.fasta"
     shell:
@@ -38,4 +46,21 @@ rule prediction:
     output:
         "recombinants.csv"
     shell:
-        "python predicter.py > {output}"
+        "python predicter.py 0.0008 > {output}"
+
+rule isolate_sequences:
+    input: rules.prediction.output
+    output: "data/pruned.fasta"
+    shell:
+        """
+        python fastaprune.py
+        """
+
+#rule nextclade:
+#    input: rules.isolate_sequences.output
+#    output: "nextclade/results.csv"
+#    shell:
+#        """
+#        nextclade run --input-fasta data/pruned.fasta --input-dataset data/sars-cov-2/ --output-dir nextclade -c nextclade/results.csv
+#        """
+#
