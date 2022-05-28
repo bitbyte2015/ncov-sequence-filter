@@ -1,0 +1,100 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 6
+Rules claiming more threads will be scaled down.
+Job stats:
+job                  count    min threads    max threads
+-----------------  -------  -------------  -------------
+build                    1              1              1
+eliminate_spaces         1              1              1
+isolate_sequences        1              1              1
+nextalign                1              1              1
+nextclade                1              1              1
+prediction               1              1              1
+unpack_gisaid_tar        1              1              1
+total                    7              1              1
+
+Select jobs to execute...
+
+[Tue Apr 26 04:54:23 2022]
+rule unpack_gisaid_tar:
+    input: data/gisaid_auspice_input_hcov-19_2022_04_26_09.tar
+    output: data/gisaid.fasta, data/metadata.tsv
+    jobid: 6
+    resources: tmpdir=/tmp
+
+[Tue Apr 26 04:54:23 2022]
+Finished job 6.
+1 of 7 steps (14%) done
+Select jobs to execute...
+
+[Tue Apr 26 04:54:23 2022]
+rule eliminate_spaces:
+    input: data/gisaid.fasta
+    output: data/tweaked.fasta
+    jobid: 5
+    resources: tmpdir=/tmp
+
+[Tue Apr 26 04:54:44 2022]
+Finished job 5.
+2 of 7 steps (29%) done
+Select jobs to execute...
+
+[Tue Apr 26 04:54:44 2022]
+rule nextalign:
+    input: nextalign, data/tweaked.fasta
+    output: data/aligned.fasta
+    jobid: 4
+    resources: tmpdir=/tmp
+
+[Tue Apr 26 04:55:26 2022]
+Finished job 4.
+3 of 7 steps (43%) done
+Select jobs to execute...
+
+[Tue Apr 26 04:55:26 2022]
+rule prediction:
+    input: data/aligned.fasta
+    output: recombinants.csv
+    jobid: 3
+    resources: tmpdir=/tmp
+
+[Tue Apr 26 04:55:48 2022]
+Finished job 3.
+4 of 7 steps (57%) done
+Select jobs to execute...
+
+[Tue Apr 26 04:55:48 2022]
+rule isolate_sequences:
+    input: recombinants.csv
+    output: data/pruned.fasta
+    jobid: 2
+    resources: tmpdir=/tmp
+
+[Tue Apr 26 04:56:09 2022]
+Finished job 2.
+5 of 7 steps (71%) done
+Select jobs to execute...
+
+[Tue Apr 26 04:56:09 2022]
+rule nextclade:
+    input: data/pruned.fasta
+    output: nextclade/results.csv
+    jobid: 1
+    resources: tmpdir=/tmp
+
+[Tue Apr 26 04:56:44 2022]
+Finished job 1.
+6 of 7 steps (86%) done
+Select jobs to execute...
+
+[Tue Apr 26 04:56:44 2022]
+localrule build:
+    input: nextclade/results.csv
+    jobid: 0
+    resources: tmpdir=/tmp
+
+[Tue Apr 26 04:56:44 2022]
+Finished job 0.
+7 of 7 steps (100%) done
+Complete log: .snakemake/log/2022-04-26T045423.122849.snakemake.log

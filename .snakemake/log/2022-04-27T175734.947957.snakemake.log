@@ -1,0 +1,74 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 6
+Rules claiming more threads will be scaled down.
+Job stats:
+job                  count    min threads    max threads
+-----------------  -------  -------------  -------------
+build                    1              1              1
+eliminate_spaces         1              1              1
+isolate_sequences        1              1              1
+nextalign                1              1              1
+nextclade                1              1              1
+prediction               1              1              1
+unpack_gisaid_tar        1              1              1
+total                    7              1              1
+
+Select jobs to execute...
+
+[Wed Apr 27 17:57:35 2022]
+rule unpack_gisaid_tar:
+    input: data/gisaid_auspice_input_hcov-19_2022_04_27_22.tar
+    output: data/gisaid.fasta, data/metadata.tsv
+    jobid: 6
+    resources: tmpdir=/tmp
+
+[Wed Apr 27 17:57:35 2022]
+Finished job 6.
+1 of 7 steps (14%) done
+Select jobs to execute...
+
+[Wed Apr 27 17:57:35 2022]
+rule eliminate_spaces:
+    input: data/gisaid.fasta
+    output: data/tweaked.fasta
+    jobid: 5
+    resources: tmpdir=/tmp
+
+[Wed Apr 27 17:57:48 2022]
+Finished job 5.
+2 of 7 steps (29%) done
+Select jobs to execute...
+
+[Wed Apr 27 17:57:48 2022]
+rule nextalign:
+    input: nextalign, data/tweaked.fasta
+    output: data/aligned.fasta
+    jobid: 4
+    resources: tmpdir=/tmp
+
+[Wed Apr 27 17:58:14 2022]
+Finished job 4.
+3 of 7 steps (43%) done
+Select jobs to execute...
+
+[Wed Apr 27 17:58:14 2022]
+rule prediction:
+    input: data/aligned.fasta
+    output: recombinants.csv
+    jobid: 3
+    resources: tmpdir=/tmp
+
+[Wed Apr 27 17:58:14 2022]
+Error in rule prediction:
+    jobid: 3
+    output: recombinants.csv
+    shell:
+        python predicter.py > recombinants.csv
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Removing output files of failed job prediction since they might be corrupted:
+recombinants.csv
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: .snakemake/log/2022-04-27T175734.947957.snakemake.log
