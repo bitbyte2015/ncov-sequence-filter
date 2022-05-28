@@ -1,3 +1,0 @@
-AttributeError in line 25 of /home/estion/ncov-sequence-filter/Snakefile:
-'Rules' object has no attribute 'unpact_gisaid_tar'
-  File "/home/estion/ncov-sequence-filter/Snakefile", line 25, in <module>

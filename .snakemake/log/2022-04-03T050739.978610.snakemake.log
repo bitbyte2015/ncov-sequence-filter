@@ -1,8 +1,0 @@
-Building DAG of jobs...
-InputFunctionException in line 11 of /home/estion/ncov-sequence-filter/Snakefile:
-Error:
-  Exception: No tar found
-Wildcards:
-
-Traceback:
-  File "/home/estion/ncov-sequence-filter/Snakefile", line 9, in input_for_do_stuff
